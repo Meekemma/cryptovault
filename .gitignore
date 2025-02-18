@@ -1,0 +1,30 @@
+# Ignore environment-specific files
+env/
+*.env
+
+# Ignore SQLite database file
+*.sqlite3
+db.sqlite3
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE/editor-specific files
+.vscode/
+.idea/
+*.swp
+
+# Ignore static and media files (auto-generated in deployment)
+staticfiles/
+media/
+
+# Ignore logs
+logs/
+*.log
