@@ -235,6 +235,7 @@ CORS_ALLOWED_ORIGINS = [
     
     "http://localhost:3000",  # Local development
     "https://cryptodatavault.com", 
+    "https://minning-sepia.vercel.app"
     
 ]
 
