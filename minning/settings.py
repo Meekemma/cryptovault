@@ -1,5 +1,6 @@
 import os
 from decouple import config
+import dj_database_url
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -230,9 +231,15 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+CORS_ALLOWED_ORIGINS = [
+    
+    "http://localhost:3000",  # Local development
+    "https://cryptodatavault.com", 
+    
+]
 
+CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_ALL_ORIGINS=True
 
 
 
