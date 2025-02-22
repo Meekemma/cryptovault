@@ -38,8 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'django_coinpayments',
-
     'base.apps.BaseConfig',
     'management.apps.ManagementConfig',
     'payment.apps.PaymentConfig',
