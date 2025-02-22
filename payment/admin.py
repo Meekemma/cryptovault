@@ -21,11 +21,11 @@ admin.site.register(Balance, BalanceAdmin)
 
 
 
-
+@admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('user', 'amount_paid', 'currency', 'status', 'verified_by_admin', 'created_at')
-    list_filter = ('status', 'currency', 'verified_by_admin')
-    search_fields = ('user__email', 'wallet_address', 'transaction_id')
+    list_display = ('id', 'user', 'plan', 'amount_paid', 'currency', 'status', 'verified_by_admin', 'created_at')
+    list_filter = ('status', 'verified_by_admin', 'currency')
+    search_fields = ('user__username', 'transaction_id', 'wallet_address')
 
-admin.site.register(Payment, PaymentAdmin)
+
 

@@ -5,6 +5,22 @@ User = get_user_model()
 from.models import WithdrawalRequest,Balance,Payment
 
 
+class PaymentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Payment
+        fields = [
+            'id', 'user', 'plan', 'wallet_address', 'amount_paid',
+            'currency', 'transaction_id', 'status', 'verified_by_admin', 'created_at'
+        ]
+        read_only_fields = ['transaction_id', 'status', 'verified_by_admin', 'created_at']
+
+    def create(self, validated_data):
+        return Payment.objects.create(**validated_data)
+
+
+
+
 
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:

@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from .models import WithdrawalRequest, Balance, Payment
-from .serializers import TransactionSerializer,WithdrawalListSerializer, WithdrawalSerializer, BalanceSerializer
+from .serializers import TransactionSerializer,WithdrawalListSerializer, WithdrawalSerializer, BalanceSerializer, PaymentSerializer
 from itertools import chain
 from operator import attrgetter
 import qrcode
@@ -28,6 +28,19 @@ def get_qr_code(request):
     buffer.seek(0)
 
     return HttpResponse(buffer.getvalue(), content_type="image/png")
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_payment(request):
+    serializer = PaymentSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        serializer.save(user=request.user)  # Attach the authenticated user
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @api_view(['GET'])

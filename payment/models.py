@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -13,24 +13,27 @@ class Payment(models.Model):
         ("failed", "Failed"),
     ]
 
+
+    PLAN_CHOICES = [
+        ('starter', 'Starter'),
+        ('standard', 'Standard'),
+        ('advanced', 'Advanced'),  
+    ]
+
+
+
+    plan = models.CharField(max_length=50, choices=PLAN_CHOICES, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    wallet_address = models.CharField(max_length=255)
-    amount_paid = models.DecimalField(max_digits=12, decimal_places=2)
+    wallet_address = models.CharField(max_length=255, blank=True, null=True)
+    amount_paid = models.DecimalField(max_digits=18, decimal_places=8)
     currency = models.CharField(max_length=10, default="BTC")  
-    transaction_id = models.CharField(max_length=100, unique=True)
+    transaction_id = models.CharField(max_length=100, unique=True, default=uuid.uuid4)
     status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default="pending")
     verified_by_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        if not self.transaction_id:
-            self.transaction_id = str(uuid.uuid4()).replace("-", "")[:20]
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"{self.user} - {self.amount_paid} {self.currency} ({self.status})"
-
-
 
 class WithdrawalRequest(models.Model):
     CRYPTO_CURRENCY_CHOICES = [
