@@ -1,10 +1,8 @@
 from django.urls import path
-from .views import CreatePaymentView,CoinPaymentsIPNView
 from . import views
 
 urlpatterns = [
-    path('create-payment/', CreatePaymentView.as_view(), name='create-payment'),
-    path('ipn/', CoinPaymentsIPNView.as_view(), name='ipn'),
+    path("qr-code/", views.get_qr_code, name="get_qr_code"),
     path('transactions/', views.transaction_history, name='transactions'),
     path('transaction/<str:pk>/', views.transaction, name='transaction'),
     path('total_balance/', views.user_balance, name='total_balance'),
@@ -14,4 +12,3 @@ urlpatterns = [
     path('all_transaction/', views.all_transactions,name='all_transaction')
 
 ]
-

@@ -254,14 +254,6 @@ COINPAYMENTS_MERCHANT_ID= os.getenv('COINPAYMENTS_MERCHANT_ID')
 COINPAYMENTS_IPN_SECRET=os.getenv('COINPAYMENTS_IPN_SECRET')
 
 
-# COINPAYMENTS_ACCEPTED_COINS = (
-# ('BCH', 'Bitcoin Cash'), ('BLK', 'BlackCoin'), ('BTC', 'Bitcoin'), ('DASH', 'Dash'), ('DCR', 'Decred'),
-# ('DGB', 'DigiByte'), ('DOGE', 'Dogecoin'), ('ETC', 'Ether Classic'), ('ETH', 'Ether'), ('EOS', 'EOS'),
-# ('EXP', 'Expanse'), ('GAME', 'GameCredits'), ('LSK', 'LISK'), ('LTC', 'Litecoin'), ('MAID', 'MaidSafeCoin'),
-# ('NAV', 'NAV Coin'), ('NEO', 'NEO'), ('POT', 'PotCoin'), ('SBD', 'Steem Dollars'), ('STEEM', 'STEEM'),
-# ('STRAT', 'Stratis'), ('VTC', 'Vertcoin'), ('XEM', 'NEM'), ('XMR', 'Monero'), ('XRP', 'Ripple'), ('XVG', 'VERGE'))
-
-
 
 
 #SMTP CONFIGURATION
@@ -278,3 +270,6 @@ BASE_APP_URL = "http://localhost:3000"
 BASE_API_URL = "http://localhost:8000"
 GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
+
+
+CRYPTO_WALLET_ADDRESS = os.getenv('CRYPTO_WALLET_ADDRESS')

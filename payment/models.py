@@ -1,27 +1,53 @@
-# models.py
+import uuid
 from django.db import models
 from django.contrib.auth import get_user_model
-User = get_user_model()
 from django.core.exceptions import ValidationError
-from django_coinpayments.models import Payment
+
+User = get_user_model()
+
+
+class Payment(models.Model):
+    PAYMENT_STATUS = [
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    wallet_address = models.CharField(max_length=255)
+    amount_paid = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=10, default="BTC")  
+    transaction_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default="pending")
+    verified_by_admin = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.transaction_id:
+            self.transaction_id = str(uuid.uuid4()).replace("-", "")[:20]
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user} - {self.amount_paid} {self.currency} ({self.status})"
+
 
 
 class WithdrawalRequest(models.Model):
     CRYPTO_CURRENCY_CHOICES = [
         ('BTC', 'Bitcoin'),
         ('ETH', 'Ethereum'),
-        ('LTC', 'Litecoin'),
-        ('BCH', 'Bitcoin Cash'),
         ('USDT', 'Tether'),
+        ('BNB', 'Binance Coin'),
+        ('SOL', 'Solana'),
+        ('BCH', 'Bitcoin Cash'),
     ]
+
 
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('CONFIRMED', 'Confirmed'),
     ]
 
-
-    # User-related fields
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -37,27 +63,32 @@ class WithdrawalRequest(models.Model):
     crypto_address = models.CharField(max_length=255, blank=True, null=True)
 
     # Status of the request
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')  # Pending, Approved, Rejected
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')  
 
-    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+
     def clean(self):
-        # Ensure that either bank details or crypto details are provided, but not both
-        if not (self.bank_name or self.crypto_currency):
+        has_bank_details = any([self.bank_name, self.bank_account_number, self.bank_account_name])
+        has_crypto_details = bool(self.crypto_currency and self.crypto_address)
+
+        if not has_bank_details and not has_crypto_details:
             raise ValidationError('Please provide either bank details or crypto details.')
 
-        if self.bank_name and self.crypto_currency:
+        if has_bank_details and has_crypto_details:
             raise ValidationError('Please provide only one withdrawal method, not both.')
-    
+
     def __str__(self):
         return f'Withdrawal request from {self.user.email} - {self.status}'
-    
+
+
+
     @property
     def total_amount_withdrawn(self):
-        withdrawn_payments = WithdrawalRequest.objects.filter(user=self.user, status="CONFIRMED")
-        return sum([withdrawal.amount for withdrawal in withdrawn_payments])
+        return WithdrawalRequest.objects.filter(user=self.user, status="CONFIRMED").aggregate(models.Sum('amount'))['amount__sum'] or 0.00
+
 
 
 
@@ -71,24 +102,13 @@ class Balance(models.Model):
 
     @property
     def total_amount_paid(self):
-        paid_payments = Payment.objects.filter(user=self.user, status="PAID")
-        return sum([payment.amount_paid for payment in paid_payments])
+        return Payment.objects.filter(user=self.user, status="completed").aggregate(models.Sum('amount_paid'))['amount_paid__sum'] or 0.00
 
     @property
     def calculated_balance(self):
         return self.total_amount_paid + self.bonus
 
     def update_balance(self):
+        """ Manually trigger balance update when needed. """
         self.balance = self.calculated_balance
-        
-
-
-    def save(self, *args, **kwargs):
-        self.update_balance()
-        super().save(*args, **kwargs)
-
-
-
-    class Meta:
-        verbose_name = 'Balance'
-        verbose_name_plural = 'Balances'
+        self.save(update_fields=['balance'])

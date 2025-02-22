@@ -1,38 +1,27 @@
 from rest_framework import serializers
-from django_coinpayments.models import Payment
-from django_coinpayments.exceptions import CoinPaymentsProviderError
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-from.models import WithdrawalRequest,Balance
-
-
-
-class PaymentSerializer(serializers.ModelSerializer):
-    buyer_email = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Payment
-        fields = ['user', 'amount', 'currency_original', 'currency_paid', 'buyer_email']
-        read_only_fields = ['user']
-
-    # def get_buyer_email(self, obj):
-    #     return obj.user.email
+from.models import WithdrawalRequest,Balance,Payment
 
 
 
 class TransactionSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = Payment
-        fields = ['id','user', 'amount', 'currency_original', 'currency_paid', 'buyer_email', 'amount_paid', 'status', 'created_at']
-        
+        fields = [
+            'id', 'user', 'wallet_address', 'amount_paid', 
+            'currency', 'transaction_id', 'status', 
+            'verified_by_admin', 'created_at'
+        ]
+
 
 
 class WithdrawalListSerializer(serializers.ModelSerializer):
     class Meta:
         model= WithdrawalRequest
         fields = '__all__'
+
 
 class WithdrawalSerializer(serializers.ModelSerializer):
     class Meta:
