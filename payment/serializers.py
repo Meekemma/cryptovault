@@ -10,7 +10,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = [
-            'id', 'user', 'plan', 'wallet_address', 'amount_paid',
+            'id', 'user', 'plan','amount_paid',
             'currency', 'transaction_id', 'status', 'verified_by_admin', 'created_at'
         ]
         read_only_fields = ['transaction_id', 'status', 'verified_by_admin', 'created_at']
@@ -26,7 +26,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = [
-            'id', 'user', 'wallet_address', 'amount_paid', 
+            'id', 'user', 'amount_paid', 
             'currency', 'transaction_id', 'status', 
             'verified_by_admin', 'created_at'
         ]
