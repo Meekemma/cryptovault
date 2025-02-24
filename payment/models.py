@@ -22,9 +22,8 @@ class Payment(models.Model):
 
 
 
-    plan = models.CharField(max_length=50, choices=PLAN_CHOICES, unique=True)
+    plan = models.CharField(max_length=50, choices=PLAN_CHOICES)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    # wallet_address = models.CharField(max_length=255, blank=True, null=True)
     amount_paid = models.DecimalField(max_digits=18, decimal_places=8)
     currency = models.CharField(max_length=10, default="BTC")  
     transaction_id = models.CharField(max_length=100, unique=True, default=uuid.uuid4)
@@ -34,6 +33,10 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.amount_paid} {self.currency} ({self.status})"
+
+
+
+
 
 class WithdrawalRequest(models.Model):
     CRYPTO_CURRENCY_CHOICES = [
