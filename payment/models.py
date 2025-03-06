@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
@@ -97,24 +98,27 @@ class WithdrawalRequest(models.Model):
 
 
 
-
 class Balance(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='balance')
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
 
     def __str__(self):
         return f'Balance for {self.user.email}: {self.balance}'
 
     @property
     def total_amount_paid(self):
-        return Payment.objects.filter(user=self.user, status="completed").aggregate(models.Sum('amount_paid'))['amount_paid__sum'] or 0.00
+        total = Payment.objects.filter(user=self.user, status="completed").aggregate(
+            total=models.Sum('amount_paid')
+        )['total']
+
+        return Decimal(total) if total is not None else Decimal("0.00")
 
     @property
     def calculated_balance(self):
-        return self.total_amount_paid + self.bonus
+        return self.total_amount_paid + self.bonus  # Both are Decimal now
 
     def update_balance(self):
         """ Manually trigger balance update when needed. """
         self.balance = self.calculated_balance
-        self.save(update_fields=['balance'])
+        self.save(update_fields=['balance'])  # Ensure database update
