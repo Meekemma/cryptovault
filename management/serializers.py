@@ -36,7 +36,7 @@ class ReferralSerializer(serializers.ModelSerializer):
             referee=user_profile,
             referrer=referrer_profile,
             code=referral_code,
-            bonus=50.00  # Set the bonus amount here
+            bonus=50.00  
         )
 
         return referral

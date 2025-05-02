@@ -229,15 +229,15 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+
+# CORS settings
 CORS_ALLOWED_ORIGINS = [
-    
-    "http://localhost:3000",  
-    "https://cryptodatavault.com", 
-    "https://minning-sepia.vercel.app"
-    
+    "http://localhost:3000",
+    "https://cryptodatavault.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
 
 
 
