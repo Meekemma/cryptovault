@@ -19,7 +19,7 @@ class UserManager(BaseUserManager):
         if not last_name:
             raise ValueError('Last name is required')
 
-        email = self.normalize_email(email)
+        email =self.normalize_email(email).lower()
         user = self.model(email=email, first_name=first_name, last_name=last_name)
         user.set_password(password)
         user.save(using=self._db)
@@ -64,6 +64,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
+    
+    def save(self, *args, **kwargs):
+        self.email = self.email.lower()
+        super(User, self).save(*args, **kwargs)
 
 
 

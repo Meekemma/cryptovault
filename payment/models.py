@@ -21,12 +21,19 @@ class Payment(models.Model):
         ('advanced', 'Advanced'),  
     ]
 
+    CURRENCY_CHOICES = [
+        ('BTC', 'BTC'),
+        ('XRP', 'XRP'),
+        ('USDT', 'USDT'),
+        ('USD', 'USD'),
+    ]
+
 
 
     plan = models.CharField(max_length=50, choices=PLAN_CHOICES)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     amount_paid = models.DecimalField(max_digits=18, decimal_places=8)
-    currency = models.CharField(max_length=10, default="BTC")  
+    currency = models.CharField(max_length=10, default="BTC", choices=CURRENCY_CHOICES)  
     transaction_id = models.CharField(max_length=100, unique=True, default=uuid.uuid4)
     status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default="pending")
     verified_by_admin = models.BooleanField(default=False)
@@ -41,12 +48,10 @@ class Payment(models.Model):
 
 class WithdrawalRequest(models.Model):
     CRYPTO_CURRENCY_CHOICES = [
-        ('BTC', 'Bitcoin'),
-        ('ETH', 'Ethereum'),
-        ('USDT', 'Tether'),
-        ('BNB', 'Binance Coin'),
-        ('SOL', 'Solana'),
-        ('BCH', 'Bitcoin Cash'),
+        ('BTC', 'BTC'),
+        ('XRP', 'XRP'),
+        ('USDT', 'USDT'),
+        ('USD', 'USD'),
     ]
 
 

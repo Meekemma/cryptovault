@@ -6,43 +6,37 @@ from django.contrib.auth import get_user_model
 from django.core.validators import EmailValidator
 User = get_user_model()
 
+
 class RegisterUserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'first_name', 'last_name', 'email', 'password', 'password2')
+        fields = ('id', 'email', 'first_name', 'last_name', 'password', 'password2')
         extra_kwargs = {'password': {'write_only': True}}
 
-    def validate(self, attrs):
-        password = attrs.get('password', '')
-        password2 = attrs.get('password2')
 
-        if password != password2:
-            raise serializers.ValidationError("password and confirm password doesn't match")
-
-        # Validate the password using Django's built-in validators
-        validate_password(password)
-
-        return attrs
 
     def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
+        value = value.lower()  # Normalize email
+        if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
+
+    
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError("Password and Confirm Password do not match.")
+        
+        validate_password(attrs['password'])  # Django's built-in password validation
+        return attrs
+    
+    
     def create(self, validated_data):
-        validated_data.pop('password2', None)
-
-        # Extract the password from validated_data
-        password = validated_data.pop('password')
-
-        user = User.objects.create(**validated_data)
-        # Use Django's set_password method to hash and set the password
-        user.set_password(password)
-        # Save the user object with the hashed password
-        user.save()
-        return user
+        validated_data.pop('password2')  # Remove confirm password
+        validated_data['email'] = validated_data['email'].lower()  # Normalize email
+        return User.objects.create_user(**validated_data)
 
 
     
