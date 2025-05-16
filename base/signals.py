@@ -55,32 +55,73 @@ def update_Profile(sender, instance, created, *args, **kwargs):
 
 
 
+@receiver(post_save, sender=User)
+def send_welcome_email(sender, instance, created, **kwargs):
+    if not created and instance.is_verified and not instance._state.adding:
+        # Prepare the context for the template
+        context = {
+            'get_full_name': instance.get_full_name,
+            'email': instance.email
+        }
+
+        # Render the email subject, plain text, and HTML message
+        subject = 'Welcome to Trexiz Limited'
+        text_content = render_to_string('email/welcome_email.txt', context)
+        html_content = render_to_string('email/welcome_email.html', context)
+
+        # Create the email message
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL 
+,
+            to=[instance.email]
+        )
+
+        # Attach the HTML version
+        email.attach_alternative(html_content, "text/html")
+
+        # Add the required Postmark header
+        email.extra_headers = {'X-PM-Message-Stream': 'outbound'}
+
+        # Send the email
+        email.send(fail_silently=False)
+
+
+
+
+
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
-    context = {
-        'current_user': reset_password_token.user,
-        'first_name': reset_password_token.user.first_name,
-        'email': reset_password_token.user.email,
-        'reset_password_url': "{}?token={}".format(
-            instance.request.build_absolute_uri(reverse('password_reset:reset-password-confirm')),
-            reset_password_token.key)
-    }
+    try:
+        # Context for the email
+        custom_url_base = "https://www.trexiz.com/reset_password_confirm"
+        context = {
+            'current_user': reset_password_token.user,
+            'first_name': reset_password_token.user.first_name,
+            'email': reset_password_token.user.email,
+            'reset_password_url': "{}?token={}".format(custom_url_base, reset_password_token.key)
+        }
 
 
-    # render email text
-    email_html_message = render_to_string('email/user_reset_password.html', context)
-    email_plaintext_message = render_to_string('email/user_reset_password.txt', context)
+        # Render email content
+        email_html_message = render_to_string('email/user_reset_password.html', context)
+        email_plaintext_message = render_to_string('email/user_reset_password.txt', context)
 
-    msg = EmailMultiAlternatives(
-        # title:
-        "Password Reset for {title}".format(title="Reset Password For Account"),
-        # message:
-        email_plaintext_message,
-        # from:
-        settings.EMAIL_HOST_USER,
-        # to:
-        [reset_password_token.user.email]
-    )
-    msg.attach_alternative(email_html_message, "text/html")
-    msg.send()
+        # Send the email
+        msg = EmailMultiAlternatives(
+            "Password Reset for {title}".format(title="Reset Password For Account"),
+            email_plaintext_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [reset_password_token.user.email]
+        )
+        msg.attach_alternative(email_html_message, "text/html")
+
+        # Add the required Postmark header
+        msg.extra_headers = {'X-PM-Message-Stream': 'outbound'}
+
+        msg.send()
+    except Exception as e:
+        # Log or handle the exception
+        print(f"Failed to send password reset email: {e}")

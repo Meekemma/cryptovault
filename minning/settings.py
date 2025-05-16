@@ -234,7 +234,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://cryptodatavault.vercel.app",
-    "https://www.trexiz.com/",
+    "https://www.trexiz.com"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -256,13 +256,13 @@ COINPAYMENTS_IPN_SECRET=os.getenv('COINPAYMENTS_IPN_SECRET')
 
 
 #SMTP CONFIGURATION
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True  
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True  
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 
 BASE_APP_URL = "http://localhost:3000"
@@ -272,3 +272,18 @@ GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 
 
 CRYPTO_WALLET_ADDRESS = os.getenv('CRYPTO_WALLET_ADDRESS')
+
+
+
+
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.postmarkapp.com'
+EMAIL_PORT = 2525
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('POSTMARK_SERVER_TOKEN')
+EMAIL_HOST_PASSWORD = os.getenv('POSTMARK_SERVER_TOKEN')
+DEFAULT_FROM_EMAIL = 'no-reply@trexiz.com' 
