@@ -90,20 +90,20 @@ def send_welcome_email(sender, instance, created, **kwargs):
 
 
 
-
-
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
     try:
-        # Context for the email
+        # Base URL for the reset link
         custom_url_base = "https://www.trexiz.com/reset_password_confirm"
+        
+        # Context for the email
         context = {
             'current_user': reset_password_token.user,
             'first_name': reset_password_token.user.first_name,
             'email': reset_password_token.user.email,
-            'reset_password_url': "{}?token={}".format(custom_url_base, reset_password_token.key)
+            'reset_password_url': "{}?token={}".format(custom_url_base, reset_password_token.key),
+            'support_email': 'support@trexiz.com' 
         }
-
 
         # Render email content
         email_html_message = render_to_string('email/user_reset_password.html', context)
@@ -111,17 +111,14 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
 
         # Send the email
         msg = EmailMultiAlternatives(
-            "Password Reset for {title}".format(title="Reset Password For Account"),
+            "Password Reset for Reset Password For Account",
             email_plaintext_message,
             settings.DEFAULT_FROM_EMAIL,
             [reset_password_token.user.email]
         )
         msg.attach_alternative(email_html_message, "text/html")
-
-        # Add the required Postmark header
         msg.extra_headers = {'X-PM-Message-Stream': 'outbound'}
-
         msg.send()
+
     except Exception as e:
-        # Log or handle the exception
         print(f"Failed to send password reset email: {e}")

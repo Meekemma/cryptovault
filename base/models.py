@@ -69,6 +69,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.email = self.email.lower()
         super(User, self).save(*args, **kwargs)
 
+    class Meta:
+        ordering = ['-created_at']
+
 
 
 
