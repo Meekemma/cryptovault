@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['cryptovault-fh88.onrender.com', 'localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    "unfold",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -73,6 +74,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
+UNFOLD = {
+    "SITE_TITLE": "Trexiz Admin",
+    "SITE_HEADER": "Trexiz",
+    "SHOW_COUNTS": True,
+    "COLLAPSIBLE_FILTERS": True,
+}
 
 CACHE_MIDDLEWARE_ALIAS = 'default'  # which cache alias to use
 CACHE_MIDDLEWARE_SECONDS = '600'    # number of seconds to cache a page for (TTL)
@@ -154,25 +163,26 @@ WSGI_APPLICATION = 'minning.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#     }
-# }
-
-
-CONN_MAX_AGE = config("CONN_MAX_AGE", cast=int, default=300)
-DATABASE_URL = config("DATABASE_URL", default=None)
-
-if DATABASE_URL is not None:
-    import dj_database_url
-    DATABASES = {
-        "default": dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=CONN_MAX_AGE,
-            conn_health_checks=True,
-        )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
+}
+
+
+# CONN_MAX_AGE = config("CONN_MAX_AGE", cast=int, default=300)
+# DATABASE_URL = config("DATABASE_URL", default=None)
+
+# if DATABASE_URL is not None:
+#     import dj_database_url
+#     DATABASES = {
+#         "default": dj_database_url.config(
+#             default=DATABASE_URL,
+#             conn_max_age=CONN_MAX_AGE,
+#             conn_health_checks=True,
+#         )
+#     }
 
 
 

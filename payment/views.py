@@ -3,12 +3,13 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from .models import WithdrawalRequest, Balance, Payment
-from .serializers import TransactionSerializer,WithdrawalListSerializer, WithdrawalSerializer, BalanceSerializer, PaymentSerializer
+from .models import *
+from .serializers import TransactionSerializer,WithdrawalListSerializer, WithdrawalSerializer, BalanceSerializer, PaymentSerializer,DailyInterestAccrualSerializer
 from itertools import chain
 from operator import attrgetter
 import qrcode
 from PIL import Image
+from django.utils import timezone
 from io import BytesIO
 from django.http import HttpResponse
 from django.conf import settings
@@ -130,34 +131,54 @@ def all_transactions(request):
 
 
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def all_transactions(request):
-   
-#     withdrawals = WithdrawalRequest.objects.filter(user=request.user).order_by('-created_at')
-#     payments = Payment.objects.filter(user=request.user).order_by('-created_at')
+@api_view(['POST'])
+def trigger_interest(request):
+    today = timezone.now().date()
+    count = 0
 
-#     # Combine both withdrawals and payments, then sort them by 'created_at' (newest first)
-#     combined_transactions = sorted(
-#         chain(withdrawals, payments),  # Combine both querysets using 'chain' to form a single iterable
-#         key=attrgetter('created_at'),  # Sort the combined list by the 'created_at' attribute
-#         reverse=True  # Sort in reverse order to show the most recent transactions first
-#     )
+    eligible_payments = Payment.objects.filter(status='completed', verified_by_admin=True, active_investment=True)
 
-#     # Initialize an empty list to store the serialized data
-#     combined_serialized_data = []
+    for payment in eligible_payments:
+        user = payment.user
+        plan = payment.plan
+        amount = payment.amount_paid
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+        if DailyInterestAccrual.objects.filter(user=user, date=today, payment=payment).exists():
+            continue
 
-#     # Loop through each transaction in the combined list
-#     for transaction in combined_transactions:
-#         if isinstance(transaction, WithdrawalRequest):
-#             # If the transaction is a withdrawal, use the WithdrawalListSerializer
-#             serializer = WithdrawalListSerializer(transaction, context={'user': request.user})
-#         else:
-#             # If the transaction is a payment, use the TransactionSerializer
-#             serializer = TransactionSerializer(transaction)
+        try:
+            interest_config = Interest.objects.get(plan=plan)
+        except Interest.DoesNotExist:
+            continue
 
-#         # Append the serialized data of the transaction to the combined_serialized_data list
-#         combined_serialized_data.append(serializer.data)
+        percent = interest_config.daily_interest_percent
+        daily_interest = (Decimal(percent) / 100) * amount
 
-    
-#     return Response(combined_serialized_data, status=status.HTTP_200_OK)
+        DailyInterestAccrual.objects.create(user=user, date=today, amount=daily_interest, payment=payment)
+
+        balance, _ = Balance.objects.get_or_create(user=user)
+        balance.balance += daily_interest
+        balance.save(update_fields=['balance'])
+
+        count += 1
+
+    return Response({"message": f"Interest applied to {count} users."})
+
+
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_interest_accruals(request):
+    accurals = DailyInterestAccrual.objects.select_related('user').filter(user=request.user)
+    serializer = DailyInterestAccrualSerializer(accurals, many=True)
+    return Response(serializer.data,  status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+

@@ -223,64 +223,14 @@ def user_profile(request, user_id):
         serializer = UserProfileSerializer(profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    elif request.method == 'PUT':
-        try:
-            profile_picture = request.FILES.get('profile_picture')
-            gender = request.data.get('gender')
-            country = request.data.get('country')
-            first_name = request.data.get('first_name')
-            last_name = request.data.get('last_name')
-            email = request.data.get('email')
-            phone_number = request.data.get('phone_number')
+    if request.method == 'PUT' or request.method == 'PATCH':
+        serializer = UserProfileSerializer(profile, data=request.data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            # Update UserProfile fields
-            profile.gender = gender
-            profile.country = country
-            profile.first_name = first_name
-            profile.last_name = last_name
-            profile.phone_number = phone_number
-            profile.email = email
-
-            if profile_picture:
-                profile.profile_picture = profile_picture
-
-            profile.save()
-            return Response({"message": "User profile updated successfully"}, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == 'PATCH':
-        try:
-            profile_picture = request.FILES.get('profile_picture')
-            gender = request.data.get('gender')
-            country = request.data.get('country')
-            first_name = request.data.get('first_name')
-            last_name = request.data.get('last_name')
-            email = request.data.get('email')
-            phone_number = request.data.get('phone_number')
-
-            # Update UserProfile fields only if they exist in request data
-            if gender is not None:
-                profile.gender = gender
-            if country is not None:
-                profile.country = country
-            if first_name is not None:
-                profile.first_name = first_name
-            if last_name is not None:
-                profile.last_name = last_name
-            if phone_number is not None:
-                profile.phone_number = phone_number
-            if email is not None:
-                profile.email = email
-            if profile_picture:
-                profile.profile_picture = profile_picture
-
-            profile.save()
-            return Response({"message": "User profile updated successfully"}, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+   
 
 
 

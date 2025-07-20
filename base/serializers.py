@@ -8,36 +8,44 @@ User = get_user_model()
 
 
 class RegisterUserSerializer(serializers.ModelSerializer):
-    password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+    password = serializers.CharField(style={'input_type': 'password'}, write_only=True, required=True, validators=[validate_password])
+    password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'password', 'password2')
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ('email', 'first_name', 'last_name', 'password', 'password2')
+        extra_kwargs = {
+            'email': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
 
-
-
-    def validate_email(self, value):
-        value = value.lower()  # Normalize email
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
-        return value
-
-
-    
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError("Password and Confirm Password do not match.")
+            raise serializers.ValidationError({"password": "Passwords do not match."})
         
-        validate_password(attrs['password'])  # Django's built-in password validation
+        validate_password(attrs['password'])
         return attrs
     
-    
-    def create(self, validated_data):
-        validated_data.pop('password2')  # Remove confirm password
-        validated_data['email'] = validated_data['email'].lower()  # Normalize email
-        return User.objects.create_user(**validated_data)
 
+    def validate_email(self, value):
+        value = value.lower()
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+
+        return value
+
+    def create(self, validated_data):
+        validated_data.pop('password2')
+        validated_data['email'] = validated_data['email'].lower()
+        user = User(
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
 
     
 
@@ -101,6 +109,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['date_created', 'date_updated', 'first_name', 'last_name', 'email', 'user']
 
     
+
+
+    def update(self, instance, validated_data):
+        profile_picture = validated_data.get('profile_picture')
+        if profile_picture:
+            instance.profile_picture = profile_picture
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 

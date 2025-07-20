@@ -1,6 +1,9 @@
 import uuid
 from django.db import models
 from decimal import Decimal
+from django.utils import timezone
+from base.models import UserProfile
+from management.models import Referral
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
@@ -99,31 +102,82 @@ class WithdrawalRequest(models.Model):
 
     @property
     def total_amount_withdrawn(self):
-        return WithdrawalRequest.objects.filter(user=self.user, status="CONFIRMED").aggregate(models.Sum('amount'))['amount__sum'] or 0.00
-
+        total = WithdrawalRequest.objects.filter(
+            user=self.user,
+            status="CONFIRMED"
+        ).aggregate(models.Sum('amount'))['amount__sum']
+        return total or Decimal('0.00')
+    
 
 
 class Balance(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='balance')
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
-    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
 
     def __str__(self):
         return f'Balance for {self.user.email}: {self.balance}'
 
     @property
-    def total_amount_paid(self):
-        total = Payment.objects.filter(user=self.user, status="completed").aggregate(
-            total=models.Sum('amount_paid')
-        )['total']
+    def total_amount_accumulated(self):
+        total = Payment.objects.filter(
+            user=self.user, 
+            status="completed", 
+            verified_by_admin=True
+        ).aggregate(total=models.Sum('amount_paid'))['total']
 
         return Decimal(total) if total is not None else Decimal("0.00")
 
     @property
-    def calculated_balance(self):
-        return self.total_amount_paid + self.bonus  # Both are Decimal now
+    def referral_bonus(self):
+        try:
+            profile = self.user.userprofile 
+        except UserProfile.DoesNotExist:
+            return Decimal("0.00")
+        total_bonus = Referral.get_referral_bonus(profile)
+        return Decimal(total_bonus)
 
     def update_balance(self):
-        """ Manually trigger balance update when needed. """
-        self.balance = self.calculated_balance
-        self.save(update_fields=['balance'])  # Ensure database update
+        payments_total = self.total_amount_accumulated
+        referral_total = self.referral_bonus
+
+        withdrawals_total = WithdrawalRequest.objects.filter(
+            user=self.user,
+            status="CONFIRMED"
+        ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
+
+        self.balance = (payments_total + referral_total) - withdrawals_total
+        self.save(update_fields=['balance'])
+
+
+
+
+
+
+class Interest(models.Model):
+    PLAN_CHOICES = [
+        ('starter', 'Starter'),
+        ('standard', 'Standard'),
+        ('advanced', 'Advanced'),  
+    ]
+
+    plan = models.CharField(max_length=50, choices=PLAN_CHOICES, unique=True)
+    daily_interest_percent = models.DecimalField(max_digits=5, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.plan} - {self.daily_interest_percent}% daily interest"
+    
+
+
+    
+class DailyInterestAccrual(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_interests')
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name='daily_accruals')
+    date = models.DateField(default=timezone.now)
+    amount = models.DecimalField(max_digits=18, decimal_places=8)
+
+    class Meta:
+        unique_together = ('user', 'payment', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.amount} interest on {self.date}"

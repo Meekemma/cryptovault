@@ -70,7 +70,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         super(User, self).save(*args, **kwargs)
 
     class Meta:
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['email']),
+        ]
 
 
 
@@ -101,7 +106,12 @@ class UserProfile(models.Model):
         return f"User Profile for {self.user.first_name}"
 
     class Meta:
+        verbose_name = 'User Profile'
+        verbose_name_plural = 'User Profiles'
         ordering = ['-date_created']
+        indexes = [
+            models.Index(fields=['user']),
+        ]
 
 
 
@@ -112,6 +122,12 @@ class  OneTimePassword(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name}-passcode"
+    
+    def is_valid(self):
+        # OTP is valid for 5 minutes
+        now = timezone.now()
+        return now - self.created_at <= timezone.timedelta(minutes=5)
+
     
 
 

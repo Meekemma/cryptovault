@@ -4,10 +4,40 @@ from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from .models import Contact
+from .models import Contact,Referral
 from django.contrib.auth import get_user_model
+from base.models import UserProfile
 
 User = get_user_model()
+
+
+
+@receiver(post_save, sender=User)
+def reward_referrer_after_verification(sender, instance, created, **kwargs):
+    """
+    Trigger referral bonus once user verifies their email.
+    """
+    if created:
+        return 
+
+    # Only proceed if the user just became verified
+    if instance.is_verified:
+        try:
+            referee_profile = UserProfile.objects.get(user=instance)
+            referral = Referral.objects.get(referee=referee_profile, status='pending')
+            
+            referral.status = 'earned'
+            referral.bonus = 10.00 
+            referral.save()
+
+            print(f"Referral bonus granted to {referral.referrer} for verified referee {referral.referee}")
+
+        except (UserProfile.DoesNotExist, Referral.DoesNotExist):
+            # No referral or profile exists — nothing to do
+            pass
+
+
+
 
 
 

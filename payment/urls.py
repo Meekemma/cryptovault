@@ -7,9 +7,10 @@ urlpatterns = [
     path('transactions/', views.transaction_history, name='transactions'),
     path('transaction/<str:pk>/', views.transaction, name='transaction'),
     path('total_balance/', views.user_balance, name='total_balance'),
-
+    path('trigger-interest/', views.trigger_interest, name='trigger-interest'),
     path('withdrawal/', views.create_withdrawal_request, name='withdrawal'),
     path('withdrawal_history/', views.withdrawal_list, name='withdrawal_history'),
-    path('all_transaction/', views.all_transactions,name='all_transaction')
+    path('all_transaction/', views.all_transactions,name='all_transaction'),
+    path('daily-accruals/', views.daily_interest_accruals, name='daily_interest_accruals'),
 
 ]

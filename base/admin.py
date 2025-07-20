@@ -1,12 +1,20 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin 
+from django.contrib.auth.admin import UserAdmin  as BaseUserAdmin
 from .models import User
 from .models import *
+from django.utils.translation import gettext_lazy as _
+from unfold.admin import ModelAdmin 
 
 
 
 
-class CustomUserAdmin(UserAdmin):
+admin.site.site_header = "Trexiz Administration"
+admin.site.site_title = "Trexiz Admin"
+admin.site.index_title = "Trexiz Admin Panel"
+
+
+
+class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
     model = User
     list_display = ['id', 'email', 'first_name', 'last_name', 'is_active', 'is_staff', 'is_superuser', 'is_verified','get_groups_display', 'auth_provider']
     search_fields = ['id', 'email', 'first_name', 'last_name']
@@ -32,7 +40,7 @@ class CustomUserAdmin(UserAdmin):
 admin.site.register(User, CustomUserAdmin)
 
 
-class UserProfileAdmin(admin.ModelAdmin):
+class UserProfileAdmin(ModelAdmin):
     list_display = ('user_id','user', 'first_name', 'last_name', 'email','gender','phone_number', 'country', 'profile_picture','referral_code', 'date_created', 'date_updated')
     search_fields = ('user__email', 'first_name', 'last_name', 'email')
     list_filter = ( 'date_created', 'date_updated')
@@ -40,7 +48,7 @@ admin.site.register(UserProfile, UserProfileAdmin)
 
 
 
-class OneTimePasswordAdmin(admin.ModelAdmin):
+class OneTimePasswordAdmin(ModelAdmin):
     list_display = ('user','code')  
     search_fields = ('user__first_name', 'user__last_name', 'code') 
 
@@ -54,7 +62,7 @@ admin.site.register(OneTimePassword, OneTimePasswordAdmin)
 
 
 
-class SubscriptionAdmin(admin.ModelAdmin):
+class SubscriptionAdmin(ModelAdmin):
     list_display = ['email', 'subscribed_at', 'is_subscribed']
     list_filter = ['is_subscribed']
     search_fields = ['email']
