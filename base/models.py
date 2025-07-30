@@ -2,8 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group
 from django.utils import timezone
 from django.core.validators import FileExtensionValidator
-
-
+from django.conf import settings
 
 
 # Create your models here.
@@ -112,6 +111,14 @@ class UserProfile(models.Model):
         indexes = [
             models.Index(fields=['user']),
         ]
+
+    @property
+    def referral_url(self):
+        """
+        Generates a referral URL for the user.
+        """
+        base_url = getattr(settings, 'BASE_URL', 'https://www.trexiz.com')
+        return f"{base_url}/signup?ref={self.referral_code}"
 
 
 

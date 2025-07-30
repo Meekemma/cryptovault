@@ -19,7 +19,7 @@ urlpatterns = [
     path('api/password_reset/confirm/', reset_password_confirm, name='reset_password_confirm'),
 
 
-    path('register/', views.registerUsers, name='register'),
+    path('register/', views.registration_view, name='register'),
     path('change-password/', views.changePasswordView, name='change-password'),
     path('verify_code/', views.code_verification, name='verify_code'),
     path('resend_otp/', views.resend_otp, name='resend_otp'),

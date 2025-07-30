@@ -16,28 +16,31 @@ import uuid
 User = get_user_model()
 
 
-def generate_referral_code():
-    code = str(uuid.uuid4()).replace("-", "")[:7]
-    return code
+def generate_unique_referral_code():
+    while True:
+        code = str(uuid.uuid4()).replace("-", "")[:7]
+        if not UserProfile.objects.filter(referral_code=code).exists():
+            return code
 
 
 @receiver(post_save, sender=User)
 def customer_Profile(sender, instance, created, *args, **kwargs):
     if created:
         # Ensure the necessary groups are created
-        free_group, created = Group.objects.get_or_create(name='Free')
-        
+        free_group, _ = Group.objects.get_or_create(name='Free')
+
         # Add the user to the "Free" group by default
         instance.groups.add(free_group)
+
+        referral_code = generate_unique_referral_code()
 
         UserProfile.objects.create(
             user=instance,
             first_name=instance.first_name,
             last_name=instance.last_name,
             email=instance.email,
-            referral_code = generate_referral_code()
+            referral_code=referral_code
         )
-        print('User Profile created for', instance.first_name)
 
         
 

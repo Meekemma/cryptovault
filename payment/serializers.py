@@ -156,7 +156,7 @@ class BalanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Balance
-        fields = ['user', 'balance', 'bonus', 'total_amount_paid']
+        fields = ['user', 'balance', 'total_amount_paid']
 
 
 

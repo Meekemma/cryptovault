@@ -12,56 +12,62 @@ User = get_user_model()
 
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def create_referral(request):
-    serializer = ReferralSerializer(data=request.data, context={'request': request})
-    
-    if serializer.is_valid(raise_exception=True):
-        serializer.save()
-        response_data = {'message': 'valid referral code'}
-        response_data.update(serializer.data)
-        return Response(response_data, status=status.HTTP_201_CREATED)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
 @api_view(['GET'])
-def referrer_stats(request, user_id):
+@permission_classes([IsAuthenticated])
+def get_referral_details(request):
+    """
+    Retrieves referral details for the authenticated user.
+    """
     try:
-        # Retrieve the referrer based on user_id
-        referrer = User.objects.get(id=user_id)
+        user_profile = request.user.userprofile
+        referrals = Referral.objects.filter(referrer=user_profile)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if not referrals.exists():
+        return Response({"message": "No referrals yet."}, status=status.HTTP_200_OK)
+
+    serializer = ReferralSerializer(referrals, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+# @api_view(['GET'])
+# def referrer_stats(request, user_id):
+#     try:
+#         # Retrieve the referrer based on user_id
+#         referrer = User.objects.get(id=user_id)
         
-        # Retrieve the referrer profile
-        referrer_profile = referrer.userprofile
+#         # Retrieve the referrer profile
+#         referrer_profile = referrer.userprofile
         
-        # Calculate total bonus and total referees count
-        total_bonus = Referral.get_accumulated_bonus(referrer_profile)
-        total_referees = Referral.get_referee_count(referrer_profile)
+#         # Calculate total bonus and total referees count
+#         total_bonus = Referral.get_accumulated_bonus(referrer_profile)
+#         total_referees = Referral.get_referee_count(referrer_profile)
         
-        # Get referees
-        referees = Referral.get_referees(referrer_profile)
+#         # Get referees
+#         referees = Referral.get_referees(referrer_profile)
         
-        # Serialize data
-        referrer_stats_serializer = ReferrerStatsSerializer({
-            'total_bonus': total_bonus,
-            'total_referees': total_referees
-        })
-        referee_serializer = RefereeBaseSerializer(referees, many=True)
+#         # Serialize data
+#         referrer_stats_serializer = ReferrerStatsSerializer({
+#             'total_bonus': total_bonus,
+#             'total_referees': total_referees
+#         })
+#         referee_serializer = RefereeBaseSerializer(referees, many=True)
         
-        # Prepare response data
-        data = {
-            'referrer_stats': referrer_stats_serializer.data,
-            'referees': referee_serializer.data
-        }
+#         # Prepare response data
+#         data = {
+#             'referrer_stats': referrer_stats_serializer.data,
+#             'referees': referee_serializer.data
+#         }
         
-        # Return serialized data as JSON response
-        return Response(data, status=status.HTTP_200_OK)
+#         # Return serialized data as JSON response
+#         return Response(data, status=status.HTTP_200_OK)
     
-    except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+#     except User.DoesNotExist:
+#         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 

@@ -15,31 +15,73 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class ReferralSerializer(serializers.ModelSerializer):
+    code = serializers.CharField(write_only=True, required=True)  
+    referee_count = serializers.SerializerMethodField()
+    referral_bonus = serializers.SerializerMethodField()
+    referee_details = serializers.SerializerMethodField()
+
     class Meta:
         model = Referral
-        fields = ['code']
+        fields = [
+            'code', 'referee', 'referrer', 'status', 'bonus', 'referred_at',
+            'referee_count', 'referral_bonus', 'referee_details'
+        ]
+        read_only_fields = [
+            'referee', 'referrer', 'status', 'bonus', 'referred_at',
+            'referee_count', 'referral_bonus', 'referees'
+        ]
+
+    def get_referee_count(self, obj):
+        if not obj.referrer:
+            return 0
+        return Referral.get_referee_count(obj.referrer)
+
+    def get_referral_bonus(self, obj):
+        if not obj.referrer:
+            return 0.00
+        return Referral.get_referral_bonus(obj.referrer)
+
+    def get_referee_details(self, obj):
+        # Return details for the specific referee of this referral
+        if not obj.referee:
+            return {}
+        return {
+            'email': obj.referee.user.email,
+            'full_name': f"{obj.referee.user.first_name} {obj.referee.user.last_name}",
+            'status': obj.status,
+            'bonus': obj.bonus,
+            'referred_at': obj.referred_at,
+        }
+
+
+    def validate_code(self, value):
+        try:
+            referrer_profile = UserProfile.objects.get(referral_code=value)
+        except UserProfile.DoesNotExist:
+            raise serializers.ValidationError("This referral code does not exist.")
+        
+        self.context['referrer_profile'] = referrer_profile
+        return value
 
     def create(self, validated_data):
-        referral_code = validated_data.get('code')
+        referrer_profile = self.context.get('referrer_profile')
+        referee_profile = self.context.get('referee_profile')
 
-        # Retrieve the referrer profile associated with the referral code
-        try:
-            referrer_profile = UserProfile.objects.get(referral_code=referral_code)
-        except UserProfile.DoesNotExist:
-            raise serializers.ValidationError("Invalid referral code")
+        if referee_profile == referrer_profile:
+            raise serializers.ValidationError("You cannot refer yourself.")
 
-        # Retrieve the referee profile from the authenticated user
-        user_profile = self.context['request'].user.userprofile
+        if Referral.objects.filter(referee=referee_profile).exists():
+            raise serializers.ValidationError("This user has already been referred.")
 
-        # Create the Referral instance
         referral = Referral.objects.create(
-            referee=user_profile,
+            code=validated_data['code'],
             referrer=referrer_profile,
-            code=referral_code,
-            bonus=50.00  
+            referee=referee_profile,
+            status='pending',
+            bonus=0.00,
         )
-
         return referral
+    
 
 
 

@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from django.contrib.auth import login,logout
 from rest_framework.views import APIView
 from .services import get_user_data
+from management.serializers import ReferralSerializer
 from .serializers import RegisterUserSerializer,changePasswordSerializer,UserProfileSerializer,AuthSerializer,SubscriptionSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import get_user_model
@@ -126,13 +127,48 @@ class LogoutApi(APIView):
 
 #Registration view
 @api_view(['POST'])
-def registerUsers(request):
+def registration_view(request):
+    """
+    Handles user registration.
+    Optionally creates a referral if 'ref' code is provided.
+    """
+    referral_code = request.data.get('ref')  # this must match Postman key
+
     serializer = RegisterUserSerializer(data=request.data)
-    if serializer.is_valid(raise_exception=True):
-        user = serializer.save()  # Save the user
-        send_code_to_user(user.email)  # Send email to the user
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+    serializer.is_valid(raise_exception=True)
+    user = serializer.save()
+    send_code_to_user(user.email)
+
+    # Handle referral if present
+    if referral_code:
+        try:
+            referee_profile = user.userprofile  # assumes UserProfile auto-created
+            referral_data = {'code': referral_code}
+            
+            referral_serializer = ReferralSerializer(
+                data=referral_data,
+                context={
+                    'referrer_profile': UserProfile.objects.get(referral_code=referral_code),
+                    'referee_profile': referee_profile
+                }
+            )
+            referral_serializer.is_valid(raise_exception=True)
+            referral_serializer.save()
+        except UserProfile.DoesNotExist:
+            pass
+
+    user_data = {
+        "id": str(user.id),
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+    }
+
+    return Response({
+        'message': 'User created successfully!',
+        'data': user_data
+    }, status=status.HTTP_201_CREATED)
+
 
 
 
